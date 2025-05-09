@@ -7,16 +7,17 @@ from tkinter import messagebox, font as tkFont
 import piecharts
 
 TASK_FILE = "tasks.json"
-custom_font = ("Pixelify Sans", 20, "bold")
+custom_font = ("arial", 20, "bold")
 
 class TaskManager:
     def __init__(self, root):
         self.root = root
         self.root.title("MINDEA")
-        self.root.geometry("600x500")
+        self.root.minsize(600, 500)
         self.root.configure(bg="#202A44")
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(5, weight=1)
+        self.screen_width = self.root.winfo_screenwidth()
 
         self.custom_font = tkFont.Font(family="Helvetica", size=12)
 
@@ -49,8 +50,7 @@ class TaskManager:
         self.canvas_frame.grid(row=3, column=0, sticky="nsew", padx=5, pady=10)
         self.canvas_frame.grid_columnconfigure(0, weight=1)
         self.canvas_frame.grid_rowconfigure(0, weight=1)
-
-        self.canvas = tk.Canvas(self.canvas_frame, bg="#202A44", highlightthickness=0, height=1000)
+        self.canvas = tk.Canvas(self.canvas_frame, bg="#202A44", highlightthickness=0, height=root.winfo_screenheight()/2)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
         self.canvas.configure(yscrollcommand=lambda *args: None)  # Disable visible scrollbar
@@ -135,21 +135,27 @@ class TaskManager:
                 continue
 
             mins, secs = divmod(int(task_info["time"]), 60)
-            frame = tk.Frame(self.tasks_container, bg="#1A223A", pady=7, padx=10, width=2520, height=100)
+            max_width = self.screen_width - 50 # safe margin and max width cap
+            frame = tk.Frame(self.tasks_container, bg="#1A223A", width=max_width, height=80)
             frame.pack_propagate(False)
-            frame.pack(fill=tk.X, padx=10, pady=2)
+            frame.pack(padx=20, pady=6)
 
-            task_label = tk.Label(frame, text=f"{task} — {mins:02d}:{secs:02d}", fg="white", bg="#1A223A", font=custom_font)
+            inner = tk.Frame(frame, bg="#1A223A", width=2520, height=100)
+            inner.pack(fill=tk.X, expand=True)
+
+            task_label = tk.Label(inner, text=f"{task} — {mins:02d}:{secs:02d}",
+                                fg="white", bg="#1A223A", font=custom_font)
             task_label.pack(side=tk.LEFT, padx=10)
 
             select_btn = tk.Button(
-                frame,
+                inner,
                 text="✅ Select",
                 command=lambda t=task: self.select_task(t),
                 **self.btn_style("#4CAF50", "#388E3C")
             )
             self.add_hover_animation(select_btn)
             select_btn.pack(side=tk.RIGHT, padx=5, pady=2)
+
 
 
             self.task_frames[task] = frame
@@ -274,7 +280,6 @@ class TaskManager:
         else:
             # Windows / macOS
             self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
 
 # ---- Run App ----
 if __name__ == "__main__":
